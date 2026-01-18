@@ -1,0 +1,18 @@
+services:
+  postgres:
+    image: postgres:17.7-alpine
+    environment:
+      POSTGRES_DB: dealflow
+      POSTGRES_USER: dealflow
+      POSTGRES_PASSWORD: dealflow
+    ports:
+      - "5451:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dealflow -d dealflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - pg-dealflow:/var/lib/postgresql/data
+volumes:
+  pg-dealflow:
