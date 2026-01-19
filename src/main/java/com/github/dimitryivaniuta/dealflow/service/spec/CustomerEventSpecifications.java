@@ -45,10 +45,45 @@ public final class CustomerEventSpecifications {
         };
     }
 
+    /**
+     * Frontend expects a single "search" box to match both the rendered summary and common payload fields.
+     *
+     * We intentionally do NOT use payload::text here (poor indexability & potentially expensive).
+     * Instead, we search summary plus a curated set of high-value keys.
+     */
     public static Specification<CustomerEvent> text(String text) {
         if (text == null || text.isBlank()) return null;
         String like = "%" + text.trim().toLowerCase() + "%";
-        return (root, q, cb) -> cb.like(cb.lower(root.get("summary")), like);
+
+        return (root, q, cb) -> {
+            var summary = cb.lower(root.get("summary"));
+
+            // jsonb_extract_path_text(payload, 'key') returns null if key missing
+            var note = cb.lower(cb.coalesce(
+                    cb.function("jsonb_extract_path_text", String.class, root.get("payload"), cb.literal("note")),
+                    ""));
+            var subject = cb.lower(cb.coalesce(
+                    cb.function("jsonb_extract_path_text", String.class, root.get("payload"), cb.literal("subject")),
+                    ""));
+            var to = cb.lower(cb.coalesce(
+                    cb.function("jsonb_extract_path_text", String.class, root.get("payload"), cb.literal("to")),
+                    ""));
+            var title = cb.lower(cb.coalesce(
+                    cb.function("jsonb_extract_path_text", String.class, root.get("payload"), cb.literal("title")),
+                    ""));
+            var name = cb.lower(cb.coalesce(
+                    cb.function("jsonb_extract_path_text", String.class, root.get("payload"), cb.literal("name")),
+                    ""));
+
+            return cb.or(
+                    cb.like(summary, like),
+                    cb.like(note, like),
+                    cb.like(subject, like),
+                    cb.like(to, like),
+                    cb.like(title, like),
+                    cb.like(name, like)
+            );
+        };
     }
 
     public static Specification<CustomerEvent> relatedListing(UUID listingId) {
