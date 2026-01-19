@@ -1,0 +1,164 @@
+{
+  "info": {
+    "_postman_id": "baf3a511-e49f-4e38-b0e3-f3aa6b6efb43",
+    "name": "dealflow-rbac-platform - GraphQL (/graphql)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Requests to explore schema (introspection) and test main flows over /graphql.\n\nSet collection variables:\n- baseUrl: http://localhost:8080\n- token: Bearer JWT value\n- workspaceId: UUID\n- customerId: UUID\n\nNotes:\n- GraphQL often returns HTTP 200 even on errors; check the 'errors' array.\n- Your schema currently uses type names like CreateCustomerInputInput / CustomerFilterInputInput / UpdateCustomerStatusInputInput."
+  },
+  "item": [
+    {
+      "name": "Introspection",
+      "item": [
+        {
+          "name": "__schema: list queries + mutations",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/graphql",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"query { __schema { queryType { fields { name args { name type { name kind ofType { name kind } } } } } mutationType { fields { name args { name type { name kind ofType { name kind } } } } } } }\"}"
+            }
+          }
+        },
+        {
+          "name": "__type: CreateCustomerInputInput",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/graphql",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"query { __type(name:\\\"CreateCustomerInputInput\\\") { name kind inputFields { name type { name kind ofType { name kind } } } } }\"}"
+            }
+          }
+        },
+        {
+          "name": "__type: Customer fields",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/graphql",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"query { __type(name:\\\"Customer\\\") { name fields { name type { name kind ofType { name kind } } } } }\"}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customers",
+      "item": [
+        {
+          "name": "createCustomer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/graphql",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"mutation Create($input: CreateCustomerInputInput!) { createCustomer(input: $input) { id displayName status email phone } }\",\"variables\":{\"input\":{\"workspaceId\":\"{{workspaceId}}\",\"displayName\":\"Acme Holdings\",\"email\":\"hello@acme.test\",\"phone\":\"+48 500 000 000\"}}}"
+            }
+          }
+        },
+        {
+          "name": "customers (filter + paging)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/graphql",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"query Q($ws: UUID!, $filter: CustomerFilterInputInput, $page: Int!, $size: Int!) { customers(workspaceId: $ws, filter: $filter, page: $page, size: $size) { items { id displayName status email } pageInfo { page size totalElements totalPages hasNext hasPrevious } } }\",\"variables\":{\"ws\":\"{{workspaceId}}\",\"filter\":{\"text\":\"acme\"},\"page\":0,\"size\":10}}"
+            }
+          }
+        },
+        {
+          "name": "updateCustomerStatus",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/graphql",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"mutation Update($input: UpdateCustomerStatusInputInput!) { updateCustomerStatus(input: $input) { id displayName status } }\",\"variables\":{\"input\":{\"workspaceId\":\"{{workspaceId}}\",\"customerId\":\"{{customerId}}\",\"status\":\"ACTIVE\"}}}"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "token",
+      "value": "test-token"
+    },
+    {
+      "key": "workspaceId",
+      "value": "REPLACE_WITH_UUID"
+    },
+    {
+      "key": "customerId",
+      "value": "REPLACE_WITH_UUID"
+    }
+  ]
+}
