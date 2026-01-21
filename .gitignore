@@ -9,3 +9,5 @@ build
 src/main/main.iml
 
 src/test/test.iml
+
+src/main/resources/keys

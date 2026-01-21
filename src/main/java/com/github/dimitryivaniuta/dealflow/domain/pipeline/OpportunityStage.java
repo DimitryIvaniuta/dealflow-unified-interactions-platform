@@ -6,5 +6,11 @@ public enum OpportunityStage {
     PROPOSAL,
     NEGOTIATION,
     WON,
-    LOST
+    LOST,
+
+    /**
+     * Soft-deleted opportunity. Preserves history and avoids FK issues.
+     * Excluded from search results unless explicitly filtered.
+     */
+    ARCHIVED
 }

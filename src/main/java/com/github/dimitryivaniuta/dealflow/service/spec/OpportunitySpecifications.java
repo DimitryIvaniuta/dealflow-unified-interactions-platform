@@ -18,6 +18,11 @@ public final class OpportunitySpecifications {
     public static Specification<Opportunity> byFilter(UUID workspaceId, OpportunityFilterInput filter) {
         Specification<Opportunity> spec = forWorkspace(workspaceId);
 
+        // Production-friendly default: hide soft-deleted rows unless explicitly filtered by stage.
+        if (filter == null || filter.getStage() == null) {
+            spec = spec.and(notArchived());
+        }
+
         if (filter == null) {
             return spec;
         }
@@ -43,5 +48,9 @@ public final class OpportunitySpecifications {
         }
 
         return spec;
+    }
+
+    public static Specification<Opportunity> notArchived() {
+        return (root, query, cb) -> cb.notEqual(root.get("stage"), OpportunityStage.ARCHIVED);
     }
 }
