@@ -19,6 +19,11 @@ public final class ListingSpecifications {
     public static Specification<Listing> byFilter(UUID workspaceId, ListingFilterInput filter) {
         Specification<Listing> spec = forWorkspace(workspaceId);
 
+        // Production-friendly default: hide soft-deleted rows unless explicitly filtered by status.
+        if (filter == null || filter.getStatus() == null) {
+            spec = spec.and(notArchived());
+        }
+
         if (filter == null) {
             return spec;
         }
@@ -44,5 +49,9 @@ public final class ListingSpecifications {
         }
 
         return spec;
+    }
+
+    public static Specification<Listing> notArchived() {
+        return (root, query, cb) -> cb.notEqual(root.get("status"), ListingStatus.ARCHIVED);
     }
 }

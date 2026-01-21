@@ -3,8 +3,10 @@ package com.github.dimitryivaniuta.dealflow.graphql.api;
 import com.github.dimitryivaniuta.dealflow.domain.listing.Listing;
 import com.github.dimitryivaniuta.dealflow.graphql.api.output.ListingConnection;
 import com.github.dimitryivaniuta.dealflow.graphql.input.CreateListingInput;
+import com.github.dimitryivaniuta.dealflow.graphql.input.DeleteListingInput;
 import com.github.dimitryivaniuta.dealflow.graphql.input.ListingFilterInput;
 import com.github.dimitryivaniuta.dealflow.graphql.input.PublishListingInput;
+import com.github.dimitryivaniuta.dealflow.graphql.input.UpdateListingInput;
 import com.github.dimitryivaniuta.dealflow.service.listing.ListingService;
 import io.leangen.graphql.annotations.GraphQLArgument;
 import io.leangen.graphql.annotations.GraphQLMutation;
@@ -19,6 +21,15 @@ import org.springframework.security.access.prepost.PreAuthorize;
 @GraphQLApi
 @RequiredArgsConstructor
 public class ListingGraphQlApi {
+    @GraphQLQuery(name = "listing")
+    @PreAuthorize("@wsSec.hasPermission(#workspaceId, T(com.github.dimitryivaniuta.dealflow.domain.security.PermissionCode).LISTING_READ)")
+    public Listing listing(
+            @GraphQLArgument(name = "workspaceId") UUID workspaceId,
+            @GraphQLArgument(name = "listingId") UUID listingId
+    ) {
+        return listingService.get(workspaceId, listingId);
+    }
+
 
     private final ListingService listingService;
 
@@ -53,5 +64,17 @@ public class ListingGraphQlApi {
         UUID listingId = input.listingId();
 
         return listingService.publish(workspaceId, listingId);
+    }
+
+    @GraphQLMutation(name = "updateListing")
+    @PreAuthorize("@wsSec.hasPermission(#input.workspaceId, T(com.github.dimitryivaniuta.dealflow.domain.security.PermissionCode).LISTING_WRITE)")
+    public Listing updateListing(@GraphQLArgument(name = "input") UpdateListingInput input) {
+        return listingService.update(input);
+    }
+
+    @GraphQLMutation(name = "deleteListing")
+    @PreAuthorize("@wsSec.hasPermission(#input.workspaceId, T(com.github.dimitryivaniuta.dealflow.domain.security.PermissionCode).LISTING_WRITE)")
+    public Listing deleteListing(@GraphQLArgument(name = "input") DeleteListingInput input) {
+        return listingService.delete(input);
     }
 }

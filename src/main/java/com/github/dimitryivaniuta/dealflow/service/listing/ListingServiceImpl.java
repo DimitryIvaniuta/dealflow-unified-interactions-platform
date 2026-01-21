@@ -5,7 +5,9 @@ import com.github.dimitryivaniuta.dealflow.domain.listing.Listing;
 import com.github.dimitryivaniuta.dealflow.domain.listing.ListingStatus;
 import com.github.dimitryivaniuta.dealflow.domain.workspace.Workspace;
 import com.github.dimitryivaniuta.dealflow.graphql.input.CreateListingInput;
+import com.github.dimitryivaniuta.dealflow.graphql.input.DeleteListingInput;
 import com.github.dimitryivaniuta.dealflow.graphql.input.ListingFilterInput;
+import com.github.dimitryivaniuta.dealflow.graphql.input.UpdateListingInput;
 import com.github.dimitryivaniuta.dealflow.repo.customer.CustomerRepository;
 import com.github.dimitryivaniuta.dealflow.repo.listing.ListingRepository;
 import com.github.dimitryivaniuta.dealflow.repo.workspace.WorkspaceRepository;
@@ -37,6 +39,17 @@ public class ListingServiceImpl implements ListingService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Listing get(UUID workspaceId, UUID listingId) {
+        Listing listing = listingRepository.findById(listingId)
+            .orElseThrow(() -> new NotFoundException("listing not found"));
+        if (!listing.getWorkspace().getId().equals(workspaceId)) {
+            throw new NotFoundException("listing not found");
+        }
+        return listing;
+    }
+
+    @Override
     @Transactional
     public Listing create(CreateListingInput input) {
         if (input == null) {
@@ -63,12 +76,53 @@ public class ListingServiceImpl implements ListingService {
 
     @Override
     @Transactional
-    public Listing publish(UUID workspaceId, UUID listingId) {
-        Listing listing = listingRepository.findById(listingId)
-            .orElseThrow(() -> new NotFoundException("listing not found"));
-        if (!listing.getWorkspace().getId().equals(workspaceId)) {
-            throw new NotFoundException("listing not found");
+    public Listing update(UpdateListingInput input) {
+        if (input == null) {
+            throw new BadRequestException("input is required");
         }
+        Listing listing = get(input.workspaceId(), input.listingId());
+
+        if (input.title() != null) {
+            listing.setTitle(requireNonBlank(input.title(), "title"));
+        }
+        if (input.city() != null) {
+            listing.setCity(requireNonBlank(input.city(), "city"));
+            listing.setCityNormalized(TextNormalizer.normalize(listing.getCity()));
+        }
+        if (input.askingPrice() != null) {
+            listing.setAskingPrice(input.askingPrice());
+        }
+        if (input.status() != null) {
+            listing.setStatus(input.status());
+        }
+
+        boolean clearCustomer = Boolean.TRUE.equals(input.clearCustomer());
+        if (clearCustomer) {
+            listing.setCustomer(null);
+        } else if (input.customerId() != null) {
+            Customer customer = customerRepository.findById(input.customerId())
+                .orElseThrow(() -> new NotFoundException("customer not found"));
+            listing.setCustomer(customer);
+        }
+
+        return listingRepository.save(listing);
+    }
+
+    @Override
+    @Transactional
+    public Listing delete(DeleteListingInput input) {
+        if (input == null) {
+            throw new BadRequestException("input is required");
+        }
+        Listing listing = get(input.workspaceId(), input.listingId());
+        listing.setStatus(ListingStatus.ARCHIVED);
+        return listingRepository.save(listing);
+    }
+
+    @Override
+    @Transactional
+    public Listing publish(UUID workspaceId, UUID listingId) {
+        Listing listing = get(workspaceId, listingId);
         listing.setStatus(ListingStatus.PUBLISHED);
         return listingRepository.save(listing);
     }
