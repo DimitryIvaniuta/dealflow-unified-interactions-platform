@@ -1,0 +1,924 @@
+{
+  "info": {
+    "_postman_id": "53718a4d-acbb-419a-9089-7f5d70579c5d",
+    "name": "Dealflow Platform - Full API (Auth + GraphQL)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Postman collection for Dealflow backend: REST auth (login/refresh/logout/reset) + GraphQL (customers, timeline, listings CRUD, opportunities CRUD)."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "workspaceId",
+      "value": ""
+    },
+    {
+      "key": "customerId",
+      "value": ""
+    },
+    {
+      "key": "listingId",
+      "value": ""
+    },
+    {
+      "key": "opportunityId",
+      "value": ""
+    },
+    {
+      "key": "passwordResetToken",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth (REST)",
+      "item": [
+        {
+          "name": "Login (username/password) -> set tokens",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Use your real username/email + password. Saves tokens to collection variables.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"NewStrongP@ssw0rd!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set(\"accessToken\", json.accessToken || \"\");",
+                  "pm.collectionVariables.set(\"refreshToken\", json.refreshToken || \"\");",
+                  "pm.environment.set(\"tokenType\", j.tokenType || \"Bearer,\");,",
+                  "pm.environment.set(\",expiresAt,\", j.expiresAt);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh -> rotate refresh token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Rotates refresh token and issues new access token.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set(\"accessToken\", json.accessToken || \"\");",
+                  "pm.collectionVariables.set(\"refreshToken\", json.refreshToken || \"\");"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout -> revoke refresh token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Revokes refresh token (best effort).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.collectionVariables.set(\"accessToken\", \"\");",
+                  "pm.collectionVariables.set(\"refreshToken\", \"\");"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Password reset request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/password-reset/request",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "password-reset",
+                "request"
+              ]
+            },
+            "description": "Anti-enumeration: always returns OK. If backend exposes token for dev, it will be saved.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usernameOrEmail\": \"admin\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "if (json.resetToken) pm.collectionVariables.set(\"passwordResetToken\", json.resetToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Password reset confirm",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/password-reset/confirm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "password-reset",
+                "confirm"
+              ]
+            },
+            "description": "Confirms password reset using token.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{passwordResetToken}}\",\n  \"newPassword\": \"NewStrongP@ssw0rd!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "GraphQL (SPQR)",
+      "item": [
+        {
+          "name": "Customers: list (paged)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Lists customers. Set workspaceId variable.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query Customers($workspaceId: UUID!, $page: Int!, $size: Int!) {\\n  customers(workspaceId: $workspaceId, filter: null, page: $page, size: $size) {\\n    items { id displayName email status }\\n    pageInfo { totalElements totalPages hasNext }\\n  }\\n}\",\n  \"variables\": {\n    \"workspaceId\": \"{{workspaceId}}\",\n    \"page\": 0,\n    \"size\": 20\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Customers: create -> set customerId",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Creates a customer and stores customerId.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation CreateCustomer($input: CreateCustomerInput!) {\\n  createCustomer(input: $input) { id displayName email status }\\n}\",\n  \"variables\": {\n    \"input\": {\n      \"workspaceId\": \"{{workspaceId}}\",\n      \"displayName\": \"Acme Corp\",\n      \"email\": \"acme@example.com\",\n      \"phone\": \"+48 123 456 789\",\n      \"status\": \"ACTIVE\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", function () { pm.response.to.have.status(200); });",
+                  "const id = pm.response.json()?.data?.createCustomer?.id;",
+                  "if (id) pm.collectionVariables.set(\"customerId\", id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Customer Timeline: query",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Reads unified timeline feed for customer.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query Timeline($workspaceId: UUID!, $customerId: UUID!, $filter: CustomerTimelineFilterInput, $page: Int!, $size: Int!) {\\n  customerTimeline(workspaceId: $workspaceId, customerId: $customerId, filter: $filter, page: $page, size: $size) {\\n    items { id eventType category occurredAt actorSubject summary payload }\\n    pageInfo { totalElements hasNext }\\n  }\\n}\",\n  \"variables\": {\n    \"workspaceId\": \"{{workspaceId}}\",\n    \"customerId\": \"{{customerId}}\",\n    \"filter\": null,\n    \"page\": 0,\n    \"size\": 20\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Customer Timeline: add note",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Adds NOTE_ADDED event.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation AddNote($input: AddCustomerNoteInput!) {\\n  addCustomerNote(input: $input) { id eventType occurredAt summary payload }\\n}\",\n  \"variables\": {\n    \"input\": {\n      \"workspaceId\": \"{{workspaceId}}\",\n      \"customerId\": \"{{customerId}}\",\n      \"note\": \"Called customer, sent follow-up email.\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Listings: list (paged)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Lists listings. Archived excluded by default.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query Listings($workspaceId: UUID!, $page: Int!, $size: Int!, $filter: ListingFilterInput) {\\n  listings(workspaceId: $workspaceId, filter: $filter, page: $page, size: $size) {\\n    items { id title status city askingPrice currency createdAt }\\n    pageInfo { totalElements totalPages hasNext }\\n  }\\n}\",\n  \"variables\": {\n    \"workspaceId\": \"{{workspaceId}}\",\n    \"page\": 0,\n    \"size\": 20,\n    \"filter\": null\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Listings: create -> set listingId",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Creates listing and stores listingId.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation CreateListing($input: CreateListingInput!) {\\n  createListing(input: $input) { id title status city askingPrice currency }\\n}\",\n  \"variables\": {\n    \"input\": {\n      \"workspaceId\": \"{{workspaceId}}\",\n      \"title\": \"Apartment - Old Town\",\n      \"city\": \"Gdańsk\",\n      \"askingPrice\": 1200000,\n      \"currency\": \"PLN\",\n      \"status\": \"DRAFT\",\n      \"customerId\": \"{{customerId}}\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", function () { pm.response.to.have.status(200); });",
+                  "const id = pm.response.json()?.data?.createListing?.id;",
+                  "if (id) pm.collectionVariables.set(\"listingId\", id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listings: get by id",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Get listing.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query Listing($workspaceId: UUID!, $listingId: UUID!) {\\n  listing(workspaceId: $workspaceId, listingId: $listingId) {\\n    id title status city askingPrice currency customer { id displayName }\\n  }\\n}\",\n  \"variables\": {\n    \"workspaceId\": \"{{workspaceId}}\",\n    \"listingId\": \"{{listingId}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Listings: update",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Patch update listing.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation UpdateListing($input: UpdateListingInput!) {\\n  updateListing(input: $input) { id title status city askingPrice currency }\\n}\",\n  \"variables\": {\n    \"input\": {\n      \"workspaceId\": \"{{workspaceId}}\",\n      \"listingId\": \"{{listingId}}\",\n      \"title\": \"Apartment - Old Town (Updated)\",\n      \"askingPrice\": 1195000\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Listings: publish",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Publish listing.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation PublishListing($input: PublishListingInput!) {\\n  publishListing(input: $input) { id status }\\n}\",\n  \"variables\": {\n    \"input\": {\n      \"workspaceId\": \"{{workspaceId}}\",\n      \"listingId\": \"{{listingId}}\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Listings: delete (archive)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Soft delete listing.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation DeleteListing($input: DeleteListingInput!) {\\n  deleteListing(input: $input) { id status }\\n}\",\n  \"variables\": {\n    \"input\": {\n      \"workspaceId\": \"{{workspaceId}}\",\n      \"listingId\": \"{{listingId}}\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Opportunities: list (paged)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "List opportunities.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query Opportunities($workspaceId: UUID!, $page: Int!, $size: Int!, $filter: OpportunityFilterInput) {\\n  opportunities(workspaceId: $workspaceId, filter: $filter, page: $page, size: $size) {\\n    items { id title stage amount currency customer { id displayName } owner { id displayName } }\\n    pageInfo { totalElements totalPages hasNext }\\n  }\\n}\",\n  \"variables\": {\n    \"workspaceId\": \"{{workspaceId}}\",\n    \"page\": 0,\n    \"size\": 20,\n    \"filter\": null\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Opportunities: create -> set opportunityId",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Create opportunity and store opportunityId.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation CreateOpportunity($input: CreateOpportunityInput!) {\\n  createOpportunity(input: $input) { id title stage amount currency }\\n}\",\n  \"variables\": {\n    \"input\": {\n      \"workspaceId\": \"{{workspaceId}}\",\n      \"title\": \"Deal - Acme partnership\",\n      \"customerId\": \"{{customerId}}\",\n      \"amount\": 50000,\n      \"currency\": \"PLN\",\n      \"stage\": \"INTAKE\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", function () { pm.response.to.have.status(200); });",
+                  "const id = pm.response.json()?.data?.createOpportunity?.id;",
+                  "if (id) pm.collectionVariables.set(\"opportunityId\", id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Opportunities: get by id",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Get opportunity.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query Opportunity($workspaceId: UUID!, $opportunityId: UUID!) {\\n  opportunity(workspaceId: $workspaceId, opportunityId: $opportunityId) {\\n    id title stage amount currency customer { id displayName } owner { id displayName }\\n  }\\n}\",\n  \"variables\": {\n    \"workspaceId\": \"{{workspaceId}}\",\n    \"opportunityId\": \"{{opportunityId}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Opportunities: update",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Patch update opportunity.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation UpdateOpportunity($input: UpdateOpportunityInput!) {\\n  updateOpportunity(input: $input) { id title stage amount currency }\\n}\",\n  \"variables\": {\n    \"input\": {\n      \"workspaceId\": \"{{workspaceId}}\",\n      \"opportunityId\": \"{{opportunityId}}\",\n      \"title\": \"Deal - Acme partnership (Updated)\",\n      \"amount\": 65000\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Opportunities: move stage",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Move stage.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation MoveStage($input: MoveOpportunityStageInput!) {\\n  moveOpportunityStage(input: $input) { id stage }\\n}\",\n  \"variables\": {\n    \"input\": {\n      \"workspaceId\": \"{{workspaceId}}\",\n      \"opportunityId\": \"{{opportunityId}}\",\n      \"stage\": \"QUALIFIED\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Opportunities: delete (archive)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "graphql"
+              ]
+            },
+            "description": "Soft delete opportunity.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation DeleteOpportunity($input: DeleteOpportunityInput!) {\\n  deleteOpportunity(input: $input) { id stage }\\n}\",\n  \"variables\": {\n    \"input\": {\n      \"workspaceId\": \"{{workspaceId}}\",\n      \"opportunityId\": \"{{opportunityId}}\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

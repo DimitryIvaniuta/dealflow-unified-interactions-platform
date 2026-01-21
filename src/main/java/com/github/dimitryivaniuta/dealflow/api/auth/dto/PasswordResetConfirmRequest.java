@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 
 /** Confirms password reset. */
 public record PasswordResetConfirmRequest(
-    @NotBlank String resetToken,
+    String resetToken,
     @NotBlank String newPassword
 ) {
 }
