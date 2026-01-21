@@ -64,6 +64,7 @@ public class ListingServiceImpl implements ListingService {
         listing.setCity(requireNonBlank(input.getCity(), "city"));
         listing.setCityNormalized(TextNormalizer.normalize(listing.getCity()));
         listing.setAskingPrice(input.getAskingPrice());
+        listing.setStatus(input.getStatus());
 
         if (input.getCustomerId() != null) {
             Customer customer = customerRepository.findById(input.getCustomerId())
